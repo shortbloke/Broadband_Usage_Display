@@ -36,6 +36,7 @@ Before flashing your Wemos, edit [broadbandspeed.ino](broadbandspeed.ino) and se
 - `ssid` and `password` with your WiFi connection information
 - `IPAddress router(192, 168, 200, 1);` replace with the IP address of your router
 - `community` the SNMP community string of your router
+- You'll need to check/update the OIDs being queried depending on the interface number used by your router. My configuration uses interface 4.
 - The maximum upload and download speeds are read from the ADSL-LINE-MIB to get the current sync speed. You can manually set a threshold if you prefer or if it's not available
 - `pollInterval` controls how frequently data is requested from the router. Default is 15 second.
 
