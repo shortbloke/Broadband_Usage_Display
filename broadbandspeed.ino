@@ -130,7 +130,9 @@ void loop()
     getSNMP();
     resetDelayTimer();
   }
-  if (uptime > lastUptime) // We need to wait for the callbacks variables to be updated before we do the calculations.
+  // We need to wait for the callbacks variables to be updated before we do the calculations.
+  // If router rebooted, then Uptime maybe less that than lastuptime
+  if (uptime != lastUptime)
   {
     calculateBandwidths();
     updateDisplay();
@@ -171,7 +173,11 @@ void stopFastPolling()
 void calculateBandwidths()
 {
   int deltaTime = 0;
-  if (uptime > 0 && lastUptime > 0)
+  if (uptime < lastUptime)
+  {
+    Serial.println("Uptime less than lastUptime. Skip calculation.");
+  }
+  else if (uptime > 0 && lastUptime > 0)
   {
     deltaTime = (uptime - lastUptime) / 100;
     if (isFastPolling && (deltaTime < (fastPollInterval / 1000)))
