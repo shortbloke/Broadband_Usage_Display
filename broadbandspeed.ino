@@ -75,6 +75,7 @@ void setup()
 {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
+  WiFi.softAPdisconnect (true);  // Disable broadcast of local AP
   Serial.println("");
   // Wait for connection
   Display.Begin();
