@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include <ESP8266HTTPClient.h>    // For Posting data to web logging service
 #include <millisDelay.h>          // https://www.forward.com.au/pfod/ArduinoProgramming/TimingDelaysInArduino.html#using
 #include <Arduino_SNMP_Manager.h> // https://github.com/shortbloke/Arduino_SNMP_Manager
 #include <MAX7219_Digits.h>       // https://github.com/Mottramlabs/MAX7219-7-Segment-Driver
@@ -15,9 +16,8 @@ const char *password = "WIFI PASSWORD";
 //* SNMP Device Info                 *
 //************************************
 IPAddress router(192, 168, 200, 1);
-const char *community = "public";
-const int snmpVersion = 1; // SNMP Version 1 = 0, SNMP Version 2 = 1
-// OIDs
+const char *community = "public";                          // SNMP Community String
+const int snmpVersion = 1;                                 // SNMP Version 1 = 0, SNMP Version 2 = 1
 char *oidAdslDownSpeed = ".1.3.6.1.2.1.10.94.1.1.4.1.2.4"; // Guage ADSL Down Sync Speed
 char *oidAdslUpSpeed = ".1.3.6.1.2.1.10.94.1.1.5.1.2.4";   // Guage ADSL Up Sync Speed
 char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.4";             // Counter32 ifInOctets.4
@@ -75,7 +75,7 @@ void setup()
 {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
-  WiFi.softAPdisconnect (true);  // Disable broadcast of local AP
+  WiFi.softAPdisconnect(true); // Disable broadcast of local AP
   Serial.println("");
   // Wait for connection
   Display.Begin();
@@ -227,39 +227,17 @@ void calculateBandwidths()
 
 void getSNMP()
 {
-  //build a SNMP get-request
+  // Build a SNMP get-request, add multiple OID to a single request
   snmpRequest.addOIDPointer(callbackDownSpeed);
-  snmpRequest.setIP(WiFi.localIP());
-  snmpRequest.setUDP(&udp);
-  snmpRequest.setRequestID(rand() % 5555);
-  snmpRequest.sendTo(router);
-  snmpRequest.clearOIDList();
-
   snmpRequest.addOIDPointer(callbackUpSpeed);
-  snmpRequest.setIP(WiFi.localIP());
-  snmpRequest.setUDP(&udp);
-  snmpRequest.setRequestID(rand() % 5555);
-  snmpRequest.sendTo(router);
-  snmpRequest.clearOIDList();
-
   snmpRequest.addOIDPointer(callbackInOctets);
-  snmpRequest.setIP(WiFi.localIP());
-  snmpRequest.setUDP(&udp);
-  snmpRequest.setRequestID(rand() % 5555);
-  snmpRequest.sendTo(router);
-  snmpRequest.clearOIDList();
-
   snmpRequest.addOIDPointer(callbackOutOctets);
-  snmpRequest.setIP(WiFi.localIP());
-  snmpRequest.setUDP(&udp);
-  snmpRequest.setRequestID(rand() % 5555);
-  snmpRequest.sendTo(router);
-  snmpRequest.clearOIDList();
-
   snmpRequest.addOIDPointer(callbackUptime);
+
   snmpRequest.setIP(WiFi.localIP());
   snmpRequest.setUDP(&udp);
   snmpRequest.setRequestID(rand() % 5555);
   snmpRequest.sendTo(router);
+
   snmpRequest.clearOIDList();
 }
