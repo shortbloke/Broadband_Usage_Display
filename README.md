@@ -31,13 +31,34 @@ The 7-segment display and the outer 3 colour PowerBar show the download bandwidt
 
 ## Configuration
 
-Before flashing your Wemos, edit [broadbandspeed.ino](broadbandspeed.ino) and set:
+### Automatic Speed Detection
+
+For ADSL/VDSL connections the line sync speed can be read via SNMP for some routers and this provide the maximum upload and download speeds currently possible. The [broadbandspeed.ino](broadbandspeed.ino) example uses this method, assuming the interface index 4 represents the DSL interface on the router. You may need to update the last number of the OIDs to change the interface being monitored.
+
+```cpp
+char *oidAdslDownSpeed = ".1.3.6.1.2.1.10.94.1.1.4.1.2.4"; // Guage ADSL Down Sync Speed
+char *oidAdslUpSpeed = ".1.3.6.1.2.1.10.94.1.1.5.1.2.4";   // Guage ADSL Up Sync Speed
+char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.4";             // Counter32 ifInOctets.4
+char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.4";            // Counter32 ifOutOctets.4
+char *oidUptime = ".1.3.6.1.2.1.1.3.0";                    // TimeTicks Uptime
+```
+
+### Fixed/Hardcoded Speeds
+
+If the router doesn't provide line sync speeds, or the router is using a cable or other connection. You can set fixed upload and download speeds instead, this is shown the in the [broadbandspeed_FixedSpeeds.ino](broadbandspeed_FixedSpeeds.ino) example by changing the lines:
+
+```cpp
+const unsigned int downSpeed = 516000000;       // 516Mbps
+const unsigned int upSpeed = 36000000;          // 36Mbps
+```
+
+### General Configuration
+
+Before flashing your Wemos, edit the sketch and set:
 
 - `ssid` and `password` with your WiFi connection information
 - `IPAddress router(192, 168, 200, 1);` replace with the IP address of your router
 - `community` the SNMP community string of your router
-- You'll need to check/update the OIDs being queried depending on the interface number used by your router. My configuration uses interface 4.
-- The maximum upload and download speeds are read from the ADSL-LINE-MIB to get the current sync speed. You can manually set a threshold if you prefer or if it's not available
 - `pollInterval` controls how frequently data is requested from the router. Default is 15 second.
 
 There are lots of other configurable parameters, as you'll see if you look through the code. Hopefully the names and comments make it easy enough to understand.
