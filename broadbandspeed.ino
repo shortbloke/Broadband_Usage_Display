@@ -30,6 +30,7 @@ char *oidUptime = ".1.3.6.1.2.1.1.3.0";                    // TimeTicks Uptime
 //************************************
 const int fastPollInterval = 1000; // Perform initial fast polling to populate data.
 const int pollInterval = 15000;    // delay in milliseconds (15000 = 15 seconds)
+const int deltaTimeError = 2;      // Permitted difference between poll interval and calculated uptime
 //************************************
 
 //************************************
@@ -174,20 +175,28 @@ void stopFastPolling()
 void calculateBandwidths()
 {
   int deltaTime = 0;
+  float deltaTimeSec = 0.0;
+
   if (uptime < lastUptime)
   {
     Serial.println("Uptime less than lastUptime. Skip calculation.");
   }
   else if (uptime > 0 && lastUptime > 0)
   {
-    deltaTime = (uptime - lastUptime) / 100;
-    if (isFastPolling && (deltaTime < (fastPollInterval / 1000)))
+    deltaTime = uptime - lastUptime;
+    deltaTimeSec = deltaTime / 100;
+
+    if (isFastPolling && ((deltaTime + deltaTimeError) < (fastPollInterval / 10)))
     {
-      Serial.println("Fast Poll: Implausable sample period. Skipping.");
+      Serial.print("Fast Poll: Implausable sample period: ");
+      Serial.print(deltaTime);
+      Serial.println(" - Skipping!");
     }
-    else if (!isFastPolling && (deltaTime < (pollInterval / 1000)))
+    else if (!isFastPolling && ((deltaTime + deltaTimeError) < (pollInterval / 10)))
     {
-      Serial.println("Regular Poll: Implausable sample period. Skipping.");
+      Serial.print("Regular Poll: Implausable sample period: ");
+      Serial.print(deltaTime);
+      Serial.println(" - Skipping!");
     }
     else
     {
@@ -197,26 +206,38 @@ void calculateBandwidths()
       }
       if (inOctets >= lastInOctets)
       {
-        bandwidthInUtilPct = ((float)((inOctets - lastInOctets) * 8) / (float)(downSpeed * deltaTime) * 100);
+        bandwidthInUtilPct = ((float)((inOctets - lastInOctets) * 8) / (float)((downSpeed * deltaTimeSec))) * 100;
       }
       else if (lastInOctets > inOctets)
       {
         Serial.println("inOctets Counter wrapped");
-        bandwidthInUtilPct = (((float)((4294967295 - lastInOctets) + inOctets) * 8) / (float)(downSpeed * deltaTime) * 100);
+        bandwidthInUtilPct = ((float)(((4294967295 - lastInOctets) + inOctets) * 8) / (float)((downSpeed * deltaTimeSec))) * 100;
       }
       if (outOctets >= lastOutOctets)
       {
-        bandwidthOutUtilPct = ((float)((outOctets - lastOutOctets) * 8) / (float)(upSpeed * deltaTime) * 100);
+        bandwidthOutUtilPct = ((float)((outOctets - lastOutOctets) * 8) / (float)((upSpeed * deltaTimeSec))) * 100;
       }
       else if (lastOutOctets > outOctets)
       {
         Serial.println("outOctets Counter wrapped");
-        bandwidthOutUtilPct = (((float)((4294967295 - lastOutOctets) + outOctets) * 8) / (float)(upSpeed * deltaTime) * 100);
+        bandwidthOutUtilPct = ((float)(((4294967295 - lastOutOctets) + outOctets) * 8) / (float)((upSpeed * deltaTimeSec))) * 100;
       }
-      // Serial.print("In %: ");
+      // Serial.print("inOctets: ");
+      // Serial.print(inOctets);
+      // Serial.print(" - lastInOctets: ");
+      // Serial.print(lastInOctets);
+      // Serial.print(" - outOctets: ");
+      // Serial.print(outOctets);
+      // Serial.print(" - lastOutOctets: ");
+      // Serial.print(lastOutOctets);
+      // Serial.print(" - In %: ");
       // Serial.print(bandwidthInUtilPct);
       // Serial.print(" - Out %: ");
-      // Serial.println(bandwidthOutUtilPct);
+      // Serial.print(bandwidthOutUtilPct);
+      // Serial.print(" - deltaTime: ");
+      // Serial.print(deltaTime);
+      // Serial.print(" - deltaTimeSec: ");
+      // Serial.println(deltaTimeSec);
     }
   }
   // Update last samples
