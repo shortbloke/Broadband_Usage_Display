@@ -20,8 +20,8 @@ const char *community = "public";               // SNMP Community String
 const int snmpVersion = 1;                      // SNMP Version 1 = 0, SNMP Version 2 = 1
 const unsigned int downSpeed = 516000000;       // 516Mbps
 const unsigned int upSpeed = 36000000;          // 36Mbps
-char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.4";  // Counter32 ifInOctets.4
-char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.4"; // Counter32 ifOutOctets.4
+char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.1";  // Counter32 ifInOctets.1
+char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.1"; // Counter32 ifOutOctets.1
 char *oidUptime = ".1.3.6.1.2.1.1.3.0";         // TimeTicks Uptime
 //************************************
 
