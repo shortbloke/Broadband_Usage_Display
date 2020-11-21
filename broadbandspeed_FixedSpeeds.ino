@@ -136,12 +136,28 @@ void loop()
 void updateDisplay()
 {
   // Download Utilisation
-  Display.Display_Value(1, bandwidthInUtilPct, 1, 0x00);        // Display % util on 7 segment displays
-  int barPercent = map(int(bandwidthInUtilPct), 0, 100, 0, 16); // Map % util on to the Green->Amber->Red LEDs
+  Display.Display_Value(1, bandwidthInUtilPct, 1, 0x00); // Display % util on 7 segment displays
+  int barPercent = 0;
+  if (bandwidthInUtilPct > 100)
+  {
+    barPercent = map(100, 0, 100, 0, 16); // As using estimated bandwidth, keep max to 100 to avoid unexpected bar led displays
+  }
+  else
+  {
+    barPercent = map(int(bandwidthInUtilPct), 0, 100, 0, 16); // Map % util on to the Green->Amber->Red LEDs
+  }
   Display.MAX7219_Write(5, Bar_1[barPercent]);
   Display.MAX7219_Write(6, Bar_2[barPercent]);
   // Upload Utilisation
-  int indicatorPercent = map(int(bandwidthOutUtilPct), 0, 100, 0, 4); // Map % util on to the indicator strip
+  int indicatorPercent = 0;
+  if (bandwidthOutUtilPct > 100)
+  {
+    indicatorPercent = map(100, 0, 100, 0, 4); // As using estimated bandwidth, keep max to 100 to avoid unexpected bar led displays
+  }
+  else
+  {
+    indicatorPercent = map(int(bandwidthOutUtilPct), 0, 100, 0, 4); // Map % util on to the indicator strip
+  }
   Display.MAX7219_Write(7, indicators[indicatorPercent]);
 }
 
