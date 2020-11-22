@@ -43,6 +43,8 @@ unsigned int inOctets = 0;
 unsigned int outOctets = 0;
 int uptime = 0;
 int lastUptime = 0;
+int lastInOctetsUptime = 0;
+int lastOutOctetsUptime = 0;
 
 float bandwidthInUtilPct = 0;
 float bandwidthOutUtilPct = 0;
@@ -132,24 +134,61 @@ void loop()
     getSNMP();
     resetDelayTimer();
   }
-  // We need to wait for the callbacks variables to be updated before we do the calculations.
-  // If router rebooted, then Uptime maybe less that than lastuptime
-  if (uptime != lastUptime)
+
+  if (isValidPoll())
   {
-    calculateBandwidths();
+    if (isFastPolling && lastOutOctets != 0 && lastInOctets != 0)
+    {
+      stopFastPolling(); // Stop fast polling after good valid poll has occured and data for current and last stored.
+    }
+    if (inOctets != lastInOctets)
+    {
+      if (lastInOctets != 0)
+      {
+        bandwidthInUtilPct = calculateBandwidth(inOctets, lastInOctets, downSpeed, uptime, lastInOctetsUptime);
+      }
+      lastInOctets = inOctets;
+      lastInOctetsUptime = uptime;
+    }
+    if (outOctets != lastOutOctets)
+    {
+      if (lastOutOctets != 0)
+      {
+        bandwidthOutUtilPct = calculateBandwidth(outOctets, lastOutOctets, upSpeed, uptime, lastOutOctetsUptime);
+      }
+      lastOutOctets = outOctets;
+      lastOutOctetsUptime = uptime;
+    }
     updateDisplay();
   }
 }
 
+
 void updateDisplay()
 {
   // Download Utilisation
-  Display.Display_Value(1, bandwidthInUtilPct, 1, 0x00);        // Display % util on 7 segment displays
-  int barPercent = map(int(bandwidthInUtilPct), 0, 100, 0, 16); // Map % util on to the Green->Amber->Red LEDs
+  Display.Display_Value(1, bandwidthInUtilPct, 1, 0x00); // Display % util on 7 segment displays
+  int barPercent = 0;
+  if (bandwidthInUtilPct > 100)
+  {
+    barPercent = map(100, 0, 100, 0, 16); // As using estimated bandwidth, keep max to 100 to avoid unexpected bar led displays
+  }
+  else
+  {
+    barPercent = map(int(bandwidthInUtilPct), 0, 100, 0, 16); // Map % util on to the Green->Amber->Red LEDs
+  }
   Display.MAX7219_Write(5, Bar_1[barPercent]);
   Display.MAX7219_Write(6, Bar_2[barPercent]);
   // Upload Utilisation
-  int indicatorPercent = map(int(bandwidthOutUtilPct), 0, 100, 0, 4); // Map % util on to the indicator strip
+  int indicatorPercent = 0;
+  if (bandwidthOutUtilPct > 100)
+  {
+    indicatorPercent = map(100, 0, 100, 0, 4); // As using estimated bandwidth, keep max to 100 to avoid unexpected bar led displays
+  }
+  else
+  {
+    indicatorPercent = map(int(bandwidthOutUtilPct), 0, 100, 0, 4); // Map % util on to the indicator strip
+  }
   Display.MAX7219_Write(7, indicators[indicatorPercent]);
 }
 
@@ -172,78 +211,80 @@ void stopFastPolling()
   isFastPolling = false;         // Clear fast polling flag
 }
 
-void calculateBandwidths()
+bool isValidPoll()
 {
-  int deltaTime = 0;
-  float deltaTimeSec = 0.0;
-
-  if (uptime < lastUptime)
+  bool retVal = true;
+  if (uptime == lastUptime)
   {
-    Serial.println("Uptime less than lastUptime. Skip calculation.");
+    // Serial.println("isValidPoll - False: uptime unchanged between polls");
+    retVal = false;
+  }
+  else if (uptime < lastUptime)
+  {
+    Serial.println("isValidPoll - False: uptime is less than last uptime, rebooted?");
+    retVal = false;
   }
   else if (uptime > 0 && lastUptime > 0)
   {
-    deltaTime = uptime - lastUptime;
-    deltaTimeSec = deltaTime / 100;
-
-    if (isFastPolling && ((deltaTime + deltaTimeError) < (fastPollInterval / 10)))
+    if (isFastPolling && ((uptime - lastUptime + deltaTimeError) < (fastPollInterval / 10)))
     {
-      Serial.print("Fast Poll: Implausable sample period: ");
-      Serial.print(deltaTime);
-      Serial.println(" - Skipping!");
+      Serial.print("isValidPoll - False: (Fast Poll) Implausable sample period: ");
+      Serial.print(uptime - lastUptime);
+      Serial.print(" (Uptime: ");
+      Serial.print(uptime);
+      Serial.print(" lastUptime: ");
+      Serial.print(lastUptime);
+      Serial.println(")");
+      retVal = false;
     }
-    else if (!isFastPolling && ((deltaTime + deltaTimeError) < (pollInterval / 10)))
+    else if (!isFastPolling && ((uptime - lastUptime + deltaTimeError) < (pollInterval / 10)))
     {
-      Serial.print("Regular Poll: Implausable sample period: ");
-      Serial.print(deltaTime);
-      Serial.println(" - Skipping!");
-    }
-    else
-    {
-      if (isFastPolling)
-      {
-        stopFastPolling();
-      }
-      if (inOctets >= lastInOctets)
-      {
-        bandwidthInUtilPct = ((float)((inOctets - lastInOctets) * 8) / (float)((downSpeed * deltaTimeSec))) * 100;
-      }
-      else if (lastInOctets > inOctets)
-      {
-        Serial.println("inOctets Counter wrapped");
-        bandwidthInUtilPct = ((float)(((4294967295 - lastInOctets) + inOctets) * 8) / (float)((downSpeed * deltaTimeSec))) * 100;
-      }
-      if (outOctets >= lastOutOctets)
-      {
-        bandwidthOutUtilPct = ((float)((outOctets - lastOutOctets) * 8) / (float)((upSpeed * deltaTimeSec))) * 100;
-      }
-      else if (lastOutOctets > outOctets)
-      {
-        Serial.println("outOctets Counter wrapped");
-        bandwidthOutUtilPct = ((float)(((4294967295 - lastOutOctets) + outOctets) * 8) / (float)((upSpeed * deltaTimeSec))) * 100;
-      }
-      // Serial.print("inOctets: ");
-      // Serial.print(inOctets);
-      // Serial.print(" - lastInOctets: ");
-      // Serial.print(lastInOctets);
-      // Serial.print(" - outOctets: ");
-      // Serial.print(outOctets);
-      // Serial.print(" - lastOutOctets: ");
-      // Serial.print(lastOutOctets);
-      // Serial.print(" - In %: ");
-      // Serial.print(bandwidthInUtilPct);
-      // Serial.print(" - Out %: ");
-      // Serial.print(bandwidthOutUtilPct);
-      // Serial.print(" - deltaTime: ");
-      // Serial.print(deltaTime);
-      // Serial.print(" - deltaTimeSec: ");
-      // Serial.println(deltaTimeSec);
+      Serial.print("isValidPoll - False: (Regular Poll) Implausable sample period: ");
+      Serial.print(uptime - lastUptime);
+      Serial.print(" (Uptime: ");
+      Serial.print(uptime);
+      Serial.print(" lastUptime: ");
+      Serial.print(lastUptime);
+      Serial.println(")");
+      retVal = false;
     }
   }
-  // Update last samples
-  lastUptime = uptime;
-  lastInOctets = inOctets;
-  lastOutOctets = outOctets;
+  if (uptime > 0 && lastUptime == 0)
+  {
+    Serial.println("isValidPoll - False: lastUptime still zero, update with current uptime");
+    retVal = false;
+  }
+  if (uptime > 0)
+  {
+    lastUptime = uptime;
+  }
+  return retVal;
+}
+
+float calculateBandwidth(unsigned int current, unsigned int last, unsigned int speed, int currentTime, int lastTime)
+{
+  float bandwidth = 0;
+  float deltaTimeSec = (float)(currentTime - lastTime) / 100;
+  if (last > current)
+  {
+    Serial.println("calculateBandwidth: last > current - Counter wrapped?");
+    bandwidth = ((float)(((4294967295 - last) + current) * 8) / (float)((speed * deltaTimeSec))) * 100;
+  }
+  else
+  {
+    bandwidth = ((float)((current - last) * 8) / (float)((speed * deltaTimeSec))) * 100;
+  }
+  Serial.print("current: ");
+  Serial.print(current);
+  Serial.print(" - last: ");
+  Serial.print(last);
+  Serial.print(" - speed: ");
+  Serial.print(speed);
+  Serial.print(" - bandwidth %: ");
+  Serial.print(bandwidth);
+  Serial.print(" - deltaTimeSec: ");
+  Serial.println(deltaTimeSec);
+  return bandwidth;
 }
 
 void getSNMP()
