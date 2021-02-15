@@ -109,19 +109,12 @@ void setup()
   snmp.setUDP(&udp); // give snmp a pointer to the UDP object
   snmp.begin();      // start the SNMP Manager
 
-  // Create a handler for each of the OID
-  snmp.addGuageHandler(oidAdslDownSpeed, &downSpeed);
-  snmp.addGuageHandler(oidAdslUpSpeed, &upSpeed);
-  snmp.addCounter32Handler(oidInOctets, &inOctets);
-  snmp.addCounter32Handler(oidOutOctets, &outOctets);
-  snmp.addTimestampHandler(oidUptime, &uptime);
-
-  // Create the call back ID's for each OID
-  callbackDownSpeed = snmp.findCallback(oidAdslDownSpeed);
-  callbackUpSpeed = snmp.findCallback(oidAdslUpSpeed);
-  callbackInOctets = snmp.findCallback(oidInOctets);
-  callbackOutOctets = snmp.findCallback(oidOutOctets);
-  callbackUptime = snmp.findCallback(oidUptime);
+  // Get callbacks from creating a handler for each of the OID
+  callbackDownSpeed = snmp.addGuageHandler(router, oidAdslDownSpeed, &downSpeed);
+  callbackUpSpeed = snmp.addGuageHandler(router, oidAdslUpSpeed, &upSpeed);
+  callbackInOctets = snmp.addCounter32Handler(router, oidInOctets, &inOctets);
+  callbackOutOctets = snmp.addCounter32Handler(router, oidOutOctets, &outOctets);
+  callbackUptime = snmp.addTimestampHandler(router, oidUptime, &uptime);
 
   fastPollDelay.start(fastPollInterval); // Start off fast polling to get data more quickly.
 }
