@@ -1,6 +1,5 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
-#include <ESP8266HTTPClient.h>    // For Posting data to web logging service
 #include <millisDelay.h>          // https://www.forward.com.au/pfod/ArduinoProgramming/TimingDelaysInArduino.html#using
 #include <Arduino_SNMP_Manager.h> // https://github.com/shortbloke/Arduino_SNMP_Manager
 #include <MAX7219_Digits.h>       // https://github.com/Mottramlabs/MAX7219-7-Segment-Driver
@@ -106,9 +105,9 @@ void setup()
   snmp.begin();      // start the SNMP Manager
 
   // Get callbacks from creating a handler for each of the OID
-  callbackInOctets = snmp.addCounter32Handler(oidInOctets, &inOctets);
-  callbackOutOctets = snmp.addCounter32Handler(oidOutOctets, &outOctets);
-  callbackUptime = snmp.addTimestampHandler(oidUptime, &uptime);
+  callbackInOctets = snmp.addCounter32Handler(router, oidInOctets, &inOctets);
+  callbackOutOctets = snmp.addCounter32Handler(router, oidOutOctets, &outOctets);
+  callbackUptime = snmp.addTimestampHandler(router, oidUptime, &uptime);
 
   fastPollDelay.start(fastPollInterval); // Start off fast polling to get data more quickly.
 }
