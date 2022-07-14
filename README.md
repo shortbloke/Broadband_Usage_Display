@@ -36,11 +36,11 @@ The 7-segment display and the outer 3 colour PowerBar show the download bandwidt
 For ADSL/VDSL connections the line sync speed can be read via SNMP for some routers and this provide the maximum upload and download speeds currently possible. The [broadbandspeed.ino](broadbandspeed.ino) example uses this method, assuming the interface index 4 represents the DSL interface on the router. You may need to update the last number of the OIDs to change the interface being monitored.
 
 ```cpp
-char *oidAdslDownSpeed = ".1.3.6.1.2.1.10.94.1.1.4.1.2.4"; // Guage ADSL Down Sync Speed
-char *oidAdslUpSpeed = ".1.3.6.1.2.1.10.94.1.1.5.1.2.4";   // Guage ADSL Up Sync Speed
-char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.4";             // Counter32 ifInOctets.4
-char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.4";            // Counter32 ifOutOctets.4
-char *oidUptime = ".1.3.6.1.2.1.1.3.0";                    // TimeTicks Uptime
+const char *oidAdslDownSpeed = ".1.3.6.1.2.1.10.94.1.1.4.1.2.4"; // Guage ADSL Down Sync Speed
+const char *oidAdslUpSpeed = ".1.3.6.1.2.1.10.94.1.1.5.1.2.4";   // Guage ADSL Up Sync Speed
+const char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.4";             // Counter32 ifInOctets.4
+const char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.4";            // Counter32 ifOutOctets.4
+const char *oidUptime = ".1.3.6.1.2.1.1.3.0";                    // TimeTicks Uptime
 ```
 
 ### Fixed/Hardcoded Speeds
