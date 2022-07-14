@@ -16,13 +16,13 @@ const char *password = "WIFI PASSWORD";
 //* SNMP Device Info                 *
 //************************************
 IPAddress router(192, 168, 200, 1);
-const char *community = "public";                          // SNMP Community String
-const int snmpVersion = 1;                                 // SNMP Version 1 = 0, SNMP Version 2 = 1
-char *oidAdslDownSpeed = ".1.3.6.1.2.1.10.94.1.1.4.1.2.4"; // Guage ADSL Down Sync Speed
-char *oidAdslUpSpeed = ".1.3.6.1.2.1.10.94.1.1.5.1.2.4";   // Guage ADSL Up Sync Speed
-char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.4";             // Counter32 ifInOctets.4
-char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.4";            // Counter32 ifOutOctets.4
-char *oidUptime = ".1.3.6.1.2.1.1.3.0";                    // TimeTicks Uptime
+const char *community = "public";                                // SNMP Community String
+const int snmpVersion = 1;                                       // SNMP Version 1 = 0, SNMP Version 2 = 1
+const char *oidAdslDownSpeed = ".1.3.6.1.2.1.10.94.1.1.4.1.2.4"; // Guage ADSL Down Sync Speed
+const char *oidAdslUpSpeed = ".1.3.6.1.2.1.10.94.1.1.5.1.2.4";   // Guage ADSL Up Sync Speed
+const char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.4";             // Counter32 ifInOctets.4
+const char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.4";            // Counter32 ifOutOctets.4
+const char *oidUptime = ".1.3.6.1.2.1.1.3.0";                    // TimeTicks Uptime
 //************************************
 
 //************************************
