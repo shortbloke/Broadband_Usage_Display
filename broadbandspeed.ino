@@ -18,8 +18,8 @@ const char *password = "WIFI PASSWORD";
 IPAddress router(192, 168, 200, 1);
 const char *community = "public";                                // SNMP Community String
 const int snmpVersion = 1;                                       // SNMP Version 1 = 0, SNMP Version 2 = 1
-const char *oidAdslDownSpeed = ".1.3.6.1.2.1.10.94.1.1.4.1.2.4"; // Guage ADSL Down Sync Speed
-const char *oidAdslUpSpeed = ".1.3.6.1.2.1.10.94.1.1.5.1.2.4";   // Guage ADSL Up Sync Speed
+const char *oidAdslDownSpeed = ".1.3.6.1.2.1.10.94.1.1.4.1.2.4"; // Gauge ADSL Down Sync Speed
+const char *oidAdslUpSpeed = ".1.3.6.1.2.1.10.94.1.1.5.1.2.4";   // Gauge ADSL Up Sync Speed
 const char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.4";             // Counter32 ifInOctets.4
 const char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.4";            // Counter32 ifOutOctets.4
 const char *oidUptime = ".1.3.6.1.2.1.1.3.0";                    // TimeTicks Uptime
@@ -41,8 +41,8 @@ unsigned int downSpeed = 0;
 unsigned int upSpeed = 0;
 unsigned int inOctets = 0;
 unsigned int outOctets = 0;
-int uptime = 0;
-int lastUptime = 0;
+unsigned int uptime = 0;
+unsigned int lastUptime = 0;
 int lastInOctetsUptime = 0;
 int lastOutOctetsUptime = 0;
 
@@ -51,9 +51,9 @@ float bandwidthOutUtilPct = 0;
 unsigned int lastInOctets = 0;
 unsigned int lastOutOctets = 0;
 // SNMP Objects
-WiFiUDP udp;                                           // UDP object used to send and recieve packets
-SNMPManager snmp = SNMPManager(community);             // Starts an SMMPManager to listen to replies to get-requests
-SNMPGet snmpRequest = SNMPGet(community, snmpVersion); // Starts an SMMPGet instance to send requests
+WiFiUDP udp;                                           // UDP object used to send and receive packets
+SNMPManager snmp = SNMPManager(community);             // Starts an SNMPManager to listen to replies to get-requests
+SNMPGet snmpRequest = SNMPGet(community, snmpVersion); // Starts an SNMPGet instance to send requests
 
 // Blank callback pointer for each OID
 ValueCallback *callbackDownSpeed;
@@ -110,8 +110,8 @@ void setup()
   snmp.begin();      // start the SNMP Manager
 
   // Get callbacks from creating a handler for each of the OID
-  callbackDownSpeed = snmp.addGuageHandler(router, oidAdslDownSpeed, &downSpeed);
-  callbackUpSpeed = snmp.addGuageHandler(router, oidAdslUpSpeed, &upSpeed);
+  callbackDownSpeed = snmp.addGaugeHandler(router, oidAdslDownSpeed, &downSpeed);
+  callbackUpSpeed = snmp.addGaugeHandler(router, oidAdslUpSpeed, &upSpeed);
   callbackInOctets = snmp.addCounter32Handler(router, oidInOctets, &inOctets);
   callbackOutOctets = snmp.addCounter32Handler(router, oidOutOctets, &outOctets);
   callbackUptime = snmp.addTimestampHandler(router, oidUptime, &uptime);
@@ -132,7 +132,7 @@ void loop()
   {
     if (isFastPolling && lastOutOctets != 0 && lastInOctets != 0)
     {
-      stopFastPolling(); // Stop fast polling after good valid poll has occured and data for current and last stored.
+      stopFastPolling(); // Stop fast polling after good valid poll has occurred and data for current and last stored.
     }
     if (inOctets != lastInOctets)
     {
@@ -221,7 +221,7 @@ bool isValidPoll()
   {
     if (isFastPolling && ((uptime - lastUptime + deltaTimeError) < (fastPollInterval / 10)))
     {
-      Serial.print("isValidPoll - False: (Fast Poll) Implausable sample period: ");
+      Serial.print("isValidPoll - False: (Fast Poll) Implausible sample period: ");
       Serial.print(uptime - lastUptime);
       Serial.print(" (Uptime: ");
       Serial.print(uptime);
@@ -232,7 +232,7 @@ bool isValidPoll()
     }
     else if (!isFastPolling && ((uptime - lastUptime + deltaTimeError) < (pollInterval / 10)))
     {
-      Serial.print("isValidPoll - False: (Regular Poll) Implausable sample period: ");
+      Serial.print("isValidPoll - False: (Regular Poll) Implausible sample period: ");
       Serial.print(uptime - lastUptime);
       Serial.print(" (Uptime: ");
       Serial.print(uptime);

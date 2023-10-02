@@ -38,8 +38,8 @@ const int deltaTimeError = 2;      // Permitted difference between poll interval
 // Variables
 unsigned int inOctets = 0;
 unsigned int outOctets = 0;
-int uptime = 0;
-int lastUptime = 0;
+unsigned int uptime = 0;
+unsigned int lastUptime = 0;
 int lastInOctetsUptime = 0;
 int lastOutOctetsUptime = 0;
 
@@ -48,9 +48,9 @@ float bandwidthOutUtilPct = 0;
 unsigned int lastInOctets = 0;
 unsigned int lastOutOctets = 0;
 // SNMP Objects
-WiFiUDP udp;                                           // UDP object used to send and recieve packets
-SNMPManager snmp = SNMPManager(community);             // Starts an SMMPManager to listen to replies to get-requests
-SNMPGet snmpRequest = SNMPGet(community, snmpVersion); // Starts an SMMPGet instance to send requests
+WiFiUDP udp;                                           // UDP object used to send and receive packets
+SNMPManager snmp = SNMPManager(community);             // Starts an SNMPManager to listen to replies to get-requests
+SNMPGet snmpRequest = SNMPGet(community, snmpVersion); // Starts an SNMPGet instance to send requests
 
 // Blank callback pointer for each OID
 ValueCallback *callbackInOctets;
@@ -125,7 +125,7 @@ void loop()
   {
     if (isFastPolling && lastOutOctets != 0 && lastInOctets != 0)
     {
-      stopFastPolling(); // Stop fast polling after good valid poll has occured and data for current and last stored.
+      stopFastPolling(); // Stop fast polling after good valid poll has occurred and data for current and last stored.
     }
     if (inOctets != lastInOctets)
     {
@@ -213,7 +213,7 @@ bool isValidPoll()
   {
     if (isFastPolling && ((uptime - lastUptime + deltaTimeError) < (fastPollInterval / 10)))
     {
-      Serial.print("isValidPoll - False: (Fast Poll) Implausable sample period: ");
+      Serial.print("isValidPoll - False: (Fast Poll) Implausible sample period: ");
       Serial.print(uptime - lastUptime);
       Serial.print(" (Uptime: ");
       Serial.print(uptime);
@@ -224,7 +224,7 @@ bool isValidPoll()
     }
     else if (!isFastPolling && ((uptime - lastUptime + deltaTimeError) < (pollInterval / 10)))
     {
-      Serial.print("isValidPoll - False: (Regular Poll) Implausable sample period: ");
+      Serial.print("isValidPoll - False: (Regular Poll) Implausible sample period: ");
       Serial.print(uptime - lastUptime);
       Serial.print(" (Uptime: ");
       Serial.print(uptime);
