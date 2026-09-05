@@ -32,9 +32,10 @@ pio run -e fixed-speeds -t upload
 
 Set the WiFi and router values in the local secrets header before uploading.
 
-This project uses the published SNMP Manager 2.x package from the PlatformIO
-Registry. The sketches use the 2.x named SNMP version and fixed-width counter
-types described in the library's [migration guide](https://github.com/shortbloke/Arduino_SNMP_Manager/blob/main/MIGRATION.md).
+This project uses the SNMP Manager 2.x code pinned to commit `8cc24ec` while
+the 2.x package is not yet available in the PlatformIO Registry. The sketches
+use the 2.x named SNMP version and fixed-width counter types described in the
+library's [migration guide](https://github.com/shortbloke/Arduino_SNMP_Manager/blob/main/MIGRATION.md).
 
 ## Requirements
 
