@@ -20,11 +20,17 @@
 //************************************
 const SNMPVersion snmpVersion = SNMPVersion::Version2c;
 IPAddress router;
-const char *oidAdslDownSpeed = ".1.3.6.1.2.1.10.94.1.1.4.1.2.4"; // Gauge ADSL Down Sync Speed
-const char *oidAdslUpSpeed = ".1.3.6.1.2.1.10.94.1.1.5.1.2.4";   // Gauge ADSL Up Sync Speed
-const char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.4";             // Counter32 ifInOctets.4
-const char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.4";            // Counter32 ifOutOctets.4
-const char *oidUptime = ".1.3.6.1.2.1.1.3.0";                    // TimeTicks Uptime
+// These names are the standard MIB labels. The numeric bases are sent in the
+// SNMP packet, and routerInterfaceIndex selects the interface being monitored.
+const char *oidAdslDownSpeedBase = ".1.3.6.1.2.1.10.94.1.1.4.1.2."; // ADSL-LINE-MIB down sync speed
+const char *oidAdslUpSpeedBase = ".1.3.6.1.2.1.10.94.1.1.5.1.2.";   // ADSL-LINE-MIB up sync speed
+const char *oidIfHcInOctetsBase = ".1.3.6.1.2.1.31.1.1.1.6.";       // IF-MIB::ifHCInOctets
+const char *oidIfHcOutOctetsBase = ".1.3.6.1.2.1.31.1.1.1.10.";    // IF-MIB::ifHCOutOctets
+char oidAdslDownSpeed[48];
+char oidAdslUpSpeed[48];
+char oidInOctets[48];
+char oidOutOctets[48];
+const char *oidUptime = ".1.3.6.1.2.1.1.3.0";                       // SNMPv2-MIB::sysUpTime
 //************************************
 
 //************************************
@@ -41,8 +47,8 @@ const int deltaTimeError = 2;      // Permitted difference between poll interval
 // Variables
 uint32_t downSpeed = 0;
 uint32_t upSpeed = 0;
-uint32_t inOctets = 0;
-uint32_t outOctets = 0;
+uint64_t inOctets = 0;
+uint64_t outOctets = 0;
 uint32_t uptime = 0;
 uint32_t lastUptime = 0;
 uint32_t lastInOctetsUptime = 0;
@@ -50,8 +56,8 @@ uint32_t lastOutOctetsUptime = 0;
 
 float bandwidthInUtilPct = 0;
 float bandwidthOutUtilPct = 0;
-uint32_t lastInOctets = 0;
-uint32_t lastOutOctets = 0;
+uint64_t lastInOctets = 0;
+uint64_t lastOutOctets = 0;
 // SNMP Objects
 WiFiUDP udp;                                           // UDP object used to send and receive packets
 SNMPManager snmp = SNMPManager(community);             // Starts an SNMPManager to listen to replies to get-requests
@@ -115,14 +121,19 @@ void setup()
     return;
   }
 
+  snprintf(oidAdslDownSpeed, sizeof(oidAdslDownSpeed), "%s%u", oidAdslDownSpeedBase, routerInterfaceIndex);
+  snprintf(oidAdslUpSpeed, sizeof(oidAdslUpSpeed), "%s%u", oidAdslUpSpeedBase, routerInterfaceIndex);
+  snprintf(oidInOctets, sizeof(oidInOctets), "%s%u", oidIfHcInOctetsBase, routerInterfaceIndex);
+  snprintf(oidOutOctets, sizeof(oidOutOctets), "%s%u", oidIfHcOutOctetsBase, routerInterfaceIndex);
+
   snmp.setUDP(&udp); // give snmp a pointer to the UDP object
   snmp.begin();      // start the SNMP Manager
 
   // Get callbacks from creating a handler for each of the OID
   callbackDownSpeed = snmp.addGaugeHandler(router, oidAdslDownSpeed, &downSpeed);
   callbackUpSpeed = snmp.addGaugeHandler(router, oidAdslUpSpeed, &upSpeed);
-  callbackInOctets = snmp.addCounter32Handler(router, oidInOctets, &inOctets);
-  callbackOutOctets = snmp.addCounter32Handler(router, oidOutOctets, &outOctets);
+  callbackInOctets = snmp.addCounter64Handler(router, oidInOctets, &inOctets);
+  callbackOutOctets = snmp.addCounter64Handler(router, oidOutOctets, &outOctets);
   callbackUptime = snmp.addTimestampHandler(router, oidUptime, &uptime);
 
   fastPollDelay.start(fastPollInterval); // Start off fast polling to get data more quickly.
@@ -263,19 +274,11 @@ bool isValidPoll()
   return retVal;
 }
 
-float calculateBandwidth(uint32_t current, uint32_t last, uint32_t speed, uint32_t currentTime, uint32_t lastTime)
+float calculateBandwidth(uint64_t current, uint64_t last, uint32_t speed, uint32_t currentTime, uint32_t lastTime)
 {
-  float bandwidth = 0;
-  float deltaTimeSec = (float)(currentTime - lastTime) / 100;
-  if (last > current)
-  {
-    Serial.println("calculateBandwidth: last > current - Counter wrapped?");
-    bandwidth = ((float)(((4294967295 - last) + current) * 8) / (float)((speed * deltaTimeSec))) * 100;
-  }
-  else
-  {
-    bandwidth = ((float)((current - last) * 8) / (float)((speed * deltaTimeSec))) * 100;
-  }
+  const double deltaTimeSec = (double)(currentTime - lastTime) / 100.0;
+  const float bandwidth = (float)((double)(current - last) * 8.0 * 100.0 /
+                                  ((double)speed * deltaTimeSec));
   Serial.print("current: ");
   Serial.print(current);
   Serial.print(" - last: ");
