@@ -13,6 +13,25 @@ Requires a router which supports SNMP. I'm using a [Draytek Vigor 2860](https://
 
 The 7-segment display and the outer 3 colour PowerBar show the download bandwidth utilisation percent. The horizontal green, yellow, red, blue LEDs are used to show the percentage upload bandwidth utilisation percent.
 
+## PlatformIO
+
+This repository is configured as a PlatformIO project for the Wemos D1 Mini.
+The default environment builds the automatic speed-detection sketch:
+
+```sh
+pio run -e automatic
+pio run -e automatic -t upload
+```
+
+To build or upload the fixed-speed variant instead:
+
+```sh
+pio run -e fixed-speeds
+pio run -e fixed-speeds -t upload
+```
+
+Set the WiFi and router values in the selected sketch before uploading.
+
 ## Requirements
 
 ### Hardware
