@@ -6,7 +6,7 @@ void getSNMP();
 void resetDelayTimer();
 void stopFastPolling();
 bool isValidPoll();
-float calculateBandwidth(unsigned int current, unsigned int last, unsigned int speed, int currentTime, int lastTime);
+float calculateBandwidth(uint32_t current, uint32_t last, uint32_t speed, uint32_t currentTime, uint32_t lastTime);
 void updateDisplay();
 
 #include "../../broadbandspeed.ino"

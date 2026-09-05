@@ -37,3 +37,6 @@
 .piolibdeps/
 .clangd/
 .vscode/
+
+# Local Wi-Fi and SNMP credentials
+include/project_secrets.h

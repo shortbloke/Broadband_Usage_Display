@@ -3,22 +3,24 @@
 #include <millisDelay.h>          // https://www.forward.com.au/pfod/ArduinoProgramming/TimingDelaysInArduino.html#using
 #include <Arduino_SNMP_Manager.h> // https://github.com/shortbloke/Arduino_SNMP_Manager
 #include <MAX7219_Digits.h>       // https://github.com/Mottramlabs/MAX7219-7-Segment-Driver
+#if __has_include("project_secrets.h")
+#include "project_secrets.h"
+#else
+#include "project_secrets.h.example"
+#endif
 
 //************************************
 //* Your WiFi info                   *
 //************************************
-const char *ssid = "YOUR SSID";
-const char *password = "WIFI PASSWORD";
 //************************************
 
 //************************************
 //* SNMP Device Info                 *
 //************************************
-IPAddress router(192, 168, 200, 1);
-const char *community = "public";                     // SNMP Community String
-const int snmpVersion = 1;                            // SNMP Version 1 = 0, SNMP Version 2 = 1
-const unsigned int downSpeed = 516000000;             // 516Mbps
-const unsigned int upSpeed = 36000000;                // 36Mbps
+const SNMPVersion snmpVersion = SNMPVersion::Version2c;
+IPAddress router;
+const uint32_t downSpeed = 1000000000;                 // 1Gbps
+const uint32_t upSpeed = 100000000;                    // 100Mbps
 const char *oidInOctets = ".1.3.6.1.2.1.2.2.1.10.1";  // Counter32 ifInOctets.1
 const char *oidOutOctets = ".1.3.6.1.2.1.2.2.1.16.1"; // Counter32 ifOutOctets.1
 const char *oidUptime = ".1.3.6.1.2.1.1.3.0";         // TimeTicks Uptime
@@ -28,7 +30,7 @@ const char *oidUptime = ".1.3.6.1.2.1.1.3.0";         // TimeTicks Uptime
 //* Settings                         *
 //************************************
 const int fastPollInterval = 1000; // Perform initial fast polling to populate data.
-const int pollInterval = 15000;    // delay in milliseconds (15000 = 15 seconds)
+const int pollInterval = 2000;    // delay in milliseconds (15000 = 15 seconds)
 const int deltaTimeError = 2;      // Permitted difference between poll interval and calculated uptime
 //************************************
 
@@ -36,17 +38,17 @@ const int deltaTimeError = 2;      // Permitted difference between poll interval
 //* Initialise                       *
 //************************************
 // Variables
-unsigned int inOctets = 0;
-unsigned int outOctets = 0;
-unsigned int uptime = 0;
-unsigned int lastUptime = 0;
-int lastInOctetsUptime = 0;
-int lastOutOctetsUptime = 0;
+uint32_t inOctets = 0;
+uint32_t outOctets = 0;
+uint32_t uptime = 0;
+uint32_t lastUptime = 0;
+uint32_t lastInOctetsUptime = 0;
+uint32_t lastOutOctetsUptime = 0;
 
 float bandwidthInUtilPct = 0;
 float bandwidthOutUtilPct = 0;
-unsigned int lastInOctets = 0;
-unsigned int lastOutOctets = 0;
+uint32_t lastInOctets = 0;
+uint32_t lastOutOctets = 0;
 // SNMP Objects
 WiFiUDP udp;                                           // UDP object used to send and receive packets
 SNMPManager snmp = SNMPManager(community);             // Starts an SNMPManager to listen to replies to get-requests
@@ -100,6 +102,13 @@ void setup()
   Serial.print(ssid);
   Serial.print(" with IP address: ");
   Serial.println(WiFi.localIP());
+
+  if (!router.fromString(routerAddress))
+  {
+    Serial.print("Invalid router IP address: ");
+    Serial.println(routerAddress);
+    return;
+  }
 
   snmp.setUDP(&udp); // give snmp a pointer to the UDP object
   snmp.begin();      // start the SNMP Manager
@@ -246,7 +255,7 @@ bool isValidPoll()
   return retVal;
 }
 
-float calculateBandwidth(unsigned int current, unsigned int last, unsigned int speed, int currentTime, int lastTime)
+float calculateBandwidth(uint32_t current, uint32_t last, uint32_t speed, uint32_t currentTime, uint32_t lastTime)
 {
   float bandwidth = 0;
   float deltaTimeSec = (float)(currentTime - lastTime) / 100;
@@ -274,15 +283,25 @@ float calculateBandwidth(unsigned int current, unsigned int last, unsigned int s
 
 void getSNMP()
 {
-  // Build a SNMP get-request, add multiple OID to a single request
-  snmpRequest.addOIDPointer(callbackInOctets);
-  snmpRequest.addOIDPointer(callbackOutOctets);
-  snmpRequest.addOIDPointer(callbackUptime);
+  snmpRequest.cancelPendingRequests();
 
-  snmpRequest.setIP(WiFi.localIP());
+  // Build a SNMP get-request, add multiple OID to a single request
+  bool requestReady = true;
+  requestReady = snmpRequest.addOIDPointer(callbackInOctets) && requestReady;
+  requestReady = snmpRequest.addOIDPointer(callbackOutOctets) && requestReady;
+  requestReady = snmpRequest.addOIDPointer(callbackUptime) && requestReady;
+  if (!requestReady)
+  {
+    snmpRequest.clearOIDList();
+    return;
+  }
+
   snmpRequest.setUDP(&udp);
   snmpRequest.setRequestID(rand() % 5555);
-  snmpRequest.sendTo(router);
+  if (!snmpRequest.sendTo(router))
+  {
+    snmpRequest.cancelPendingRequests();
+  }
 
   snmpRequest.clearOIDList();
 }

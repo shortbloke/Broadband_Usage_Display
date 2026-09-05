@@ -30,7 +30,11 @@ pio run -e fixed-speeds
 pio run -e fixed-speeds -t upload
 ```
 
-Set the WiFi and router values in the selected sketch before uploading.
+Set the WiFi and router values in the local secrets header before uploading.
+
+This project uses the published SNMP Manager 2.x package from the PlatformIO
+Registry. The sketches use the 2.x named SNMP version and fixed-width counter
+types described in the library's [migration guide](https://github.com/shortbloke/Arduino_SNMP_Manager/blob/main/MIGRATION.md).
 
 ## Requirements
 
@@ -73,11 +77,16 @@ const unsigned int upSpeed = 36000000;          // 36Mbps
 
 ### General Configuration
 
-Before flashing your Wemos, edit the sketch and set:
+Before flashing your Wemos, copy `include/project_secrets.h.example` to
+`include/project_secrets.h` and set:
 
 - `ssid` and `password` with your WiFi connection information
-- `IPAddress router(192, 168, 200, 1);` replace with the IP address of your router
+- `routerAddress` with your router's dotted IPv4 address, for example `"192.168.0.1"`
 - `community` the SNMP community string of your router
 - `pollInterval` controls how frequently data is requested from the router. Default is 15 second.
 
-There are lots of other configurable parameters, as you'll see if you look through the code. Hopefully the names and comments make it easy enough to understand.
+`include/project_secrets.h` is ignored by Git, so your WiFi and SNMP credentials
+stay local. The sketches fall back to the redacted example when that file is
+absent. There are lots of other configurable parameters, as you'll see if you
+look through the code. Hopefully the names and comments make it easy enough to
+understand.

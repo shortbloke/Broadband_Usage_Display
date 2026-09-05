@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-lint:
+    name: ESP8266 D1 Mini / ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - automatic
+          - fixed-speeds
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install PlatformIO
+        run: python -m pip install --upgrade platformio
+
+      - name: Build ESP8266 firmware
+        run: pio run --environment "${{ matrix.environment }}"
+
+      - name: Run cppcheck
+        run: pio check --environment "${{ matrix.environment }}" --fail-on-defect high --silent
+
+  repository-hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Reject tracked local secrets
+        shell: bash
+        run: |
+          if git ls-files --error-unmatch include/project_secrets.h >/dev/null 2>&1; then
+            echo "include/project_secrets.h must remain ignored and untracked"
+            exit 1
+          fi
+
+          credential_files=$(git grep -l -E 'const char \*(ssid|password)[[:space:]]*=' -- ':!include/project_secrets.h.example' || true)
+          if [[ -n "$credential_files" ]]; then
+            echo "Credentials must live only in include/project_secrets.h"
+            echo "$credential_files"
+            exit 1
+          fi
+
+      - name: Check trailing whitespace
+        shell: bash
+        run: |
+          files=$(git ls-files -z | xargs -0 grep -Il .)
+          if [[ -n "$files" ]] && grep -nH '[[:blank:]]$' $files; then
+            echo "Trailing whitespace found"
+            exit 1
+          fi
