@@ -113,7 +113,7 @@ that exposes the required standard MIB values.
 
 ### Libraries
 
-- Data collection via SNMP: published **SNMP Manager 2.x** library
+- Data collection via SNMP: published **SNMP Manager 2.x** library ([GitHub project](https://github.com/shortbloke/Arduino_SNMP_Manager))
 - Data polling interval control via: [MillisDelay](https://www.forward.com.au/pfod/ArduinoProgramming/TimingDelaysInArduino.html#using)
 - Power Display Driver via: [MAX7219 Digits](https://github.com/Mottramlabs/MAX7219-7-Segment-Driver)
 
