@@ -56,6 +56,46 @@ This project uses the published SNMP Manager 2.x package from the PlatformIO
 Registry. The sketches use the 2.x named SNMP version and fixed-width counter
 types described in the library's [migration guide](https://github.com/shortbloke/Arduino_SNMP_Manager/blob/main/MIGRATION.md).
 
+Use the normal package manager for your build tool. Do not add a GitHub URL or
+Git tag for SNMP Manager; the published 2.x package is the supported source.
+
+For Arduino IDE, install **SNMP Manager 2.x** from **Tools > Manage Libraries**.
+For Arduino CLI, install the published package with:
+
+```sh
+arduino-cli lib install "SNMP Manager@2.0.0"
+```
+
+For a PlatformIO project, the dependency entry is:
+
+```ini
+lib_deps =
+  shortbloke/SNMP Manager@^2.0.0
+```
+
+Do not use the older 1.x example `shortbloke/SNMP Manager@^1.2.1` with these
+sketches. It refers to the previous API and does not provide the Counter64 and
+other 2.x interfaces used here.
+
+### Optional SNMP library build flags
+
+You may see examples in the SNMP Manager migration guide such as:
+
+```ini
+build_flags =
+  -DSNMP_PACKET_LENGTH=1024
+  -DSNMP_MAX_PENDING_REQUESTS=8
+  -DDEBUG
+```
+
+Those are optional library-wide tuning and diagnostic settings. This project
+does not currently need them: it uses the library defaults, sends a small
+request for one selected interface, and already checks request-building and
+send failures. Do not add these flags just because they appear in the library
+documentation. If you do add one, place it under the shared `[env]` section in
+`platformio.ini` so the application and the compiled SNMP library receive the
+same setting.
+
 ## Requirements
 
 ### Hardware for this PCB
@@ -73,7 +113,7 @@ that exposes the required standard MIB values.
 
 ### Libraries
 
-- Data collection via SNMP: [Arduino SNMP Manager](https://github.com/shortbloke/Arduino_SNMP_Manager)
+- Data collection via SNMP: published **SNMP Manager 2.x** library
 - Data polling interval control via: [MillisDelay](https://www.forward.com.au/pfod/ArduinoProgramming/TimingDelaysInArduino.html#using)
 - Power Display Driver via: [MAX7219 Digits](https://github.com/Mottramlabs/MAX7219-7-Segment-Driver)
 
